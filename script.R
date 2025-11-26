@@ -15,26 +15,26 @@ KE_Pf <- getRaster(surface = "Plasmodium falciparum PR2-10",
                    shp = KE_shp)
 plot(KE_Pf)
 
-# ---- 1️⃣ Randomly sample points ----
+# -Randomly sample points 
 # na.rm=TRUE skips any NoData cells automatically
 n_total <- 50  # total random points to sample
 samples <- spatSample(KE_Pf, size = n_total, method = "random",
                       as.points = TRUE, values = TRUE, na.rm = TRUE)
 
-# ---- 2️⃣ Convert to dataframe ----
-df <- as.data.frame(samples, geom = "XY")  # ✅ correct argument
+#  Convert to dataframe 
+df <- as.data.frame(samples, geom = "XY")  
 # this automatically creates columns: x, y, and the PfPR value
-names(df) <- c("pfpr", "lon", "lat")      # rename for clarity
+names(df) <- c("pfpr", "lon", "lat")    
 
-# ---- 3️⃣ Classify PfPR into categories ----
+#  Classify PfPR into categories ----
 high_thr <- 0.10
 med_thr  <- 0.04
 
 df$category <- with(df, ifelse(pfpr >= high_thr, "High",
                                ifelse(pfpr >= med_thr, "Medium", "Low")))
 
-# ---- 4️⃣ Balance classes (optional) ----
-samples_per_class <- 50  # adjust per need
+# Balance classes 
+samples_per_class <- 50 
 set.seed(42)
 
 subset_class <- function(cat) {
@@ -51,14 +51,16 @@ df_low    <- subset_class("Low")
 
 df_sites <- rbind(df_high, df_medium, df_low)
 
-# ---- 5️⃣ Add name + export ----
+#   Add name + export                  
 df_sites$name <- ave(df_sites$category, df_sites$category,
                      FUN = function(x) paste0(x, "_site_", seq_along(x)))
 
-out_csv <- "malaria_sites.csv"   # e.g., "/content/malaria_sites.csv" in Colab
+out_csv <- "malaria_sites.csv"  
 write.csv(df_sites[, c("name", "category", "lon", "lat", "pfpr")], out_csv, row.names = FALSE)
 
-# ---- 6️⃣ QA ----
 cat("Counts per class:\n"); print(table(df_sites$category))
+
+                     
 cat("\nPfPR summary by class:\n"); print(aggregate(pfpr ~ category, df_sites, summary))
 cat("\n✅ Wrote", nrow(df_sites), "rows to", out_csv, "\n")
+
